@@ -67,3 +67,10 @@ No login (required by hackathon). Backend is a local demonstration server, **not
 - `server/evaluator.js` — scoring and explicitly heuristic evaluator.
 - `server/index.js` — API, import, persistence, static hosting.
 - `tests/scoring.test.js` — scoring contract tests.
+
+## Python Backend / Data (AI + SQLite)
+
+The implementation of `backend_data_tasks.txt` is in [`backend/`](backend/README.md). It provides the organizer DEV/CONTROL importer, immutable checklist versions, Gemini-compatible AI evaluator, strict response validation, weighted scoring with N/A, evidence mapping and audited appeals/reviews. Start it from the repository root with `python -m backend` after following the [backend setup](backend/README.md). API docs: `http://127.0.0.1:8000/docs`.
+
+The Python API runs independently on port 8000; the existing `npm start` demo retains its heuristic evaluator. Its frontend must be connected to the [Python API contract](backend/README.md#api-для-frontend) to use real AI. The organizer's 65 DEV conversations were imported and verified locally; datasets, SQLite files, signed organizer URLs and API keys are excluded from Git. Real Gemini evaluation requires your own free-tier key in `backend/.env`.
+
