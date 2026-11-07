@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from .models import Checklist, EvaluateRequest, ImportRequest, AppealRequest, ReviewRequest
@@ -62,6 +63,13 @@ def create_app(db_path=None, evaluator=None):
         except RuntimeError as exc:
             raise HTTPException(502, str(exc)) from None
 
+    @app.post('/api/conversations/import')
+    def file_import(body: dict):
+        group = body.get('data', {}).get('dataset_group_id')
+        if not isinstance(group, str) or not group:
+            raise ValueError('Organizer envelope requires data.dataset_group_id')
+        return import_dataset(store, body, group)
+
     @app.get('/api/conversations')
     def conversations(language: str | None=None, channel: str | None=None, status: str | None=None, group_id: str | None=None):
         with store.connect() as db:
@@ -76,7 +84,7 @@ def create_app(db_path=None, evaluator=None):
                         status and status != state, group_id and group_id != row['group_id']]):
                     continue
                 result.append({k:c[k] for k in ('conversation_id','language','channel','dataset_group_id')} |
-                              {'status': state, 'total_score': e.get('final_total_score'), 'audio_url': c['audio_url']})
+                              {'evaluation_id': e.get('id'), 'status': state, 'total_score': e.get('final_total_score'), 'audio_url': c['audio_url']})
             return result
 
     @app.get('/api/conversations/{cid}')
@@ -208,4 +216,5 @@ def create_app(db_path=None, evaluator=None):
         log.info('review completed: %s',aid)
         return appeal_data | {'id':aid,'evaluation':ev}
 
+    app.mount('/', StaticFiles(directory=Path(__file__).resolve().parents[1] / 'frontend', html=True), name='frontend')
     return app
